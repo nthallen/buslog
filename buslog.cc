@@ -49,12 +49,15 @@ void write_log( const char *logfile, const char *lastTime, xmlNodePtr tree ) {
   fclose(fp);
 }
 
+/**
+ * Want to add command line options to select route, verbosity.
+ */
 int main( int argc, char **argv ) {
   const char *lastTime = "0";
   const char *route = "77";
   const char *logfile = "locations.log";
   curl_obj co;
-  co.set_log_level( CT_LOG_BODIES );
+  co.set_log_level( CT_LOG_NOTHING );
   while (!done) {
     xmlNodePtr tree;
     char urlbuf[256];
@@ -63,6 +66,7 @@ int main( int argc, char **argv ) {
       route, lastTime );
     co.transaction_start("Get bus data");
     co.set_url(urlbuf);
+    co.parse_request(1);
     co.perform("Get Locations");
     co.transaction_end();
     tree = co.get_parse_tree();
