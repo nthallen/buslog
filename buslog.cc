@@ -34,8 +34,8 @@ void write_log_int( FILE *fp, const char *lastTime, xmlNodePtr tree ) {
       const char *lon = get_prop(tree, "lon");
       const char *secsSinceReport = get_prop(tree, "secsSinceReport");
       const char *heading = get_prop(tree, "heading");
-      fprintf( fp, "%s, %s, \"%s\", \"%s\", %s, %s, %s\n",
-        lastTime, secsSinceReport, id, dirTag, lat, lon, heading );
+      fprintf( fp, "\"%s\", \"%s\", %s, %s, %s, %s, %s\n",
+        id, dirTag, lastTime, secsSinceReport, lat, lon, heading );
     }
     write_log_int( fp, lastTime, tree->children );
   }

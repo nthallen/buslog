@@ -1,3 +1,4 @@
 buslog
-locations.log
+*.log
 trans
+
