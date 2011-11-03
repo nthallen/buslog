@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include "curllog/curl_obj.h"
 #include "nortlib.h"
 
@@ -56,6 +57,14 @@ int main( int argc, char **argv ) {
   const char *lastTime = "0";
   const char *route = "77";
   const char *logfile = "locations.log";
+  double hours = 20.;
+  time_t end_time, now;
+  
+  if ( argc > 1 ) route = argv[1];
+  if ( argc > 2 ) hours = atof(argv[2]);
+  printf("Logging data for MBTA route %s for %.1lf hours\n", route, hours);
+  
+  end_time = time(NULL) + (time_t)(hours * 3600);
   curl_obj co;
   co.set_log_level( CT_LOG_NOTHING );
   while (!done) {
@@ -75,6 +84,8 @@ int main( int argc, char **argv ) {
       write_log( logfile, lastTime, tree );
     } else lastTime = "0";
     co.write_transaction_log();
+    now = time(NULL);
+    if ( now >= end_time) break;
     sleep(30);
   }
   return 0;
