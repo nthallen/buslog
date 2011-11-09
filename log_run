@@ -1,0 +1,22 @@
+#! /bin/sh
+# log_run <route> <hours>
+function nl_error {
+  echo "log_run: $*" >&2
+  exit 1
+}
+
+route=$1
+hours=$2
+[ -n "$hours" ] || nl_error Must specify route and hours
+
+cd /opt/nort/buslog
+rdir=route_$route
+today=`date +%y%m%d`
+tdir=$rdir/$today
+[ -d "$rdir" ] || mkdir $rdir ||
+  nl_error "Unable to create directory $rdir"
+[ -d "$tdir" ] || mkdir $tdir ||
+  nl_error "Unable to create directory $tdir"
+cd $tdir
+export LD_LIBRARY_PATH=/usr/local/lib
+/opt/nort/buslog/buslog $route $hours >>buslog.log 2>&1

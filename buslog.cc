@@ -63,6 +63,7 @@ int main( int argc, char **argv ) {
   if ( argc > 1 ) route = argv[1];
   if ( argc > 2 ) hours = atof(argv[2]);
   printf("Logging data for MBTA route %s for %.1lf hours\n", route, hours);
+  fflush(stdout);
   
   end_time = time(NULL) + (time_t)(hours * 3600);
   curl_obj co;

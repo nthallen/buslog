@@ -1,4 +1,7 @@
 buslog
 *.log
 trans
+nohup.out
+route_77
+route_78
 
