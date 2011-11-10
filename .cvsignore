@@ -2,6 +2,10 @@ buslog
 *.log
 trans
 nohup.out
-route_77
-route_78
+route77
+route78
+route78a
+route77.m
+route78.m
+*.xml
 

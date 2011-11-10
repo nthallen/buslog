@@ -10,7 +10,9 @@ my $route = "route";
 
 while (<>) {
   if ( m/^<route tag="([^"]+)" .* latMin="(-?[\d.]+)" latMax="(-?[\d.]+)" lonMin="(-?[\d.]+)" lonMax="(-?[\d.]+)">/ ) {
-    $route = "route_$1";
+    $route = "route";
+    print "function $route = route$1\n";
+    print "$route.route = '$1';\n";
     print "$route.latMin = $2;\n$route.latMax = $3;\n$route.lonMin = $4;\n$route.lonMax = $5;\n";
   } elsif ( m|^<stop tag="([^"]+)" title="([^"]+)" lat="(-?[\d.]+)" lon="(-?[\d.]+)"(?: stopId="[^"]+")?/>| ) {
     die "Stop $1 redefined\n" if $stop{$1};
