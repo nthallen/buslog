@@ -20,3 +20,12 @@ tdir=$rdir/$today
 cd $tdir
 export LD_LIBRARY_PATH=/usr/local/lib
 /opt/nort/buslog/buslog $route $hours >>buslog.log 2>&1
+cd ..
+[ -d results ] || mkdir results ||
+  nl_error "Unable to create results directory in $PWD"
+mv $today/locations.log results/$route_$today.log
+nl=`cat $today/buslog.log | wc -l`
+nf=`find $today | wc -l`
+if [ "$nl" = "1" -a "$nf" = "4" ]; then
+  rm -rf $today
+fi
