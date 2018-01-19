@@ -1,4 +1,4 @@
-%function work_path
+function A = work_path(file)
 % First, get the appropriate path and calculate distances
 % Next, get bus locations. For each location:
 %  determine which path segment the location is closest to
@@ -29,7 +29,12 @@
 %   segment. Angle to the segment is acos(dot(C,N(j)))-pi/2
 %   Otherwise, distance to the segment is distance to the
 %   nearest endpoint.
-route = route77;
+B = sscanf(file, '%d_%d.log');
+if length(B) ~= 2
+    error('Invalid filename');
+end
+path = sprintf('route_%d/%s', B(1), file);
+route = route_def(B(1));
 % coslat = cosd(P(:,1));
 % CP = [ coslat .* cosd(P(:,2))  coslat .* sind(P(:,2))  sind(P(:,1)) ];
 % N = cross(CP(1:end-1,:),CP(2:end,:));
@@ -38,7 +43,9 @@ route = route77;
 % dist2 = abs(asind(dot(CP(2:end,:),D,2)));
 % x = 1:size(N,1);
 % plot(x,dist,'+',x,dist2,'*');
-A = ReadBusLog('route_77/77_111107.log');
+A = ReadBusLog(path);
+A.route = route;
+A.day = datestr(A.time(1)/(24*3600) + datenum(1970,1,1,0,0,0) - 5/24, 23);
 A.time = time2d(A.time)/3600-5;
 rfact = almanac('earth','radius','sm')*2*pi/360; % miles per degree
 %% Fill in direction information
@@ -129,69 +136,75 @@ n_runs = 0;
 for bus = 1:length(buses)
     isbus = find(strcmp(A.ID, buses(bus) ));
     [ dist, xdist ] = evaldir(A, route, isbus);
-    fwd = diff(dist) > -.01;
-    tgap = (diff(A.time(isbus))>.2);
-    fwd(tgap,:) = 0;
-    % if the direction is right and the time gap is small enough,
-    fwdfrom = [fwd; fwd(end,:)];
-    fwd = [ fwd(1,:); fwd ];
-    near = xdist < .02;
-    good = fwd & near;
-    goodfrom = fwdfrom & near;
-    good = [ good; 0*good(end,:) ];
-    run0 = 1;
-    while run0 < length(isbus)
-        % Find the next good point
-        good(run0,:) = goodfrom(run0,:);
-        run1 = min(find(any(good(run0:end,:)')));
-        if isempty(run1)
-            fprintf(1,'%s: Discarding %d points at end of run\n', ...
-                buses{bus}, length(isbus)-run0+1);
-            run0 = length(isbus);
-        else
-            if run1 > 1
-                fprintf(1, '%s: Discarding %d points\n', buses{bus}, run1-1);
-                run0 = run0 + run1 - 1;
-            end
-            % Now select the longest run
-            gi = find(good(run0,:));
-            bestdir = 0;
-            bestlen = 1;
-            for i = 1:length(gi)
-                newlen = min(find(diff(good(run0:end,gi(i)))));
-                if newlen > bestlen
-                    bestdir = gi(i);
-                    bestlen = newlen;
-                end
-            end
-            if bestlen > 1
-                % Now we can save this run of bestlen points on bestdir
-                % Do we save the turnaround point? Why not? If it isn't
-                run1 = run0 + bestlen - 1;
-                newdirs(isbus(run0:run1)) = bestdir;
-                n_runs = n_runs+1;
-                runs(n_runs) = struct('busID', buses(bus), 'dir', bestdir, ...
-                    'time', A.time(isbus(run0:run1)), ...
-                    'dist', dist(run0:run1,bestdir), ...
-                    'xdist', xdist(run0:run1,bestdir));
-                run0 = run1;
+    if size(dist,1) >= 2
+        fwd = diff(dist) > -.01;
+        tgap = (diff(A.time(isbus))>.2);
+        fwd(tgap,:) = 0;
+        % if the direction is right and the time gap is small enough,
+        fwdfrom = [fwd; fwd(end,:)];
+        fwd = [ fwd(1,:); fwd ];
+        near = xdist < .02;
+        good = fwd & near;
+        goodfrom = fwdfrom & near;
+        good = [ good; 0*good(end,:) ];
+        run0 = 1;
+        while run0 < length(isbus)
+            % Find the next good point
+            good(run0,:) = goodfrom(run0,:);
+            run1 = find(any(good(run0:end,:)'), 1 );
+            if isempty(run1)
+                %           fprintf(1,'%s: Discarding %d points at end of run\n', ...
+                %               buses{bus}, length(isbus)-run0+1);
+                run0 = length(isbus);
             else
-                run0 = run0+1;
-                fprintf(1,'%s: Discarding single point\n', buses{bus});
+                if run1 > 1
+                    %               fprintf(1, '%s: Discarding %d points\n', buses{bus}, run1-1);
+                    run0 = run0 + run1 - 1;
+                end
+                % Now select the longest run
+                gi = find(good(run0,:));
+                bestdir = 0;
+                bestlen = 1;
+                for i = 1:length(gi)
+                    newlen = find(diff(good(run0:end,gi(i))), 1 );
+                    if newlen > bestlen
+                        bestdir = gi(i);
+                        bestlen = newlen;
+                    end
+                end
+                if bestlen > 1
+                    % Now we can save this run of bestlen points on bestdir
+                    % Do we save the turnaround point? Why not? If it isn't
+                    run1 = run0 + bestlen - 1;
+                    newdirs(isbus(run0:run1)) = bestdir;
+                    n_runs = n_runs+1;
+                    runs(n_runs) = struct('busID', buses(bus), 'dir', bestdir, ...
+                        'time', A.time(isbus(run0:run1)), ...
+                        'dist', dist(run0:run1,bestdir), ...
+                        'xdist', xdist(run0:run1,bestdir));
+                    run0 = run1;
+                else
+                    run0 = run0+1;
+                    % fprintf(1,'%s: Discarding single point\n', buses{bus});
+                end
             end
         end
     end
 end
+%%
+A.runs = runs;
+A.newdirs = newdirs;
 %% Graph runs by direction
-for dir = 1:length(route.direction)
-    figure;
-    for run = find([runs.dir] == dir)
-        plot(runs(run).time,runs(run).dist,'.-');
-        hold on;
-    end
-    hold off;
-    title([route.route ': ' route.direction(dir).title ' ' route.direction(dir).name ]);
-end
+% for dir = 1:length(A.route.direction)
+%     figure;
+%     for run = find([A.runs.dir] == dir)
+%         plot(A.runs(run).time,A.runs(run).dist,'.-');
+%         hold on;
+%     end
+%     hold off;
+%     title([A.route.route ': ' A.route.direction(dir).title ' ' ...
+%         A.route.direction(dir).name ' ' A.day ]);
+% end
 
 %% Now routes are cleared up, but we may still need to make some
 % breaks if a bus backtracks.

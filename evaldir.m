@@ -3,7 +3,6 @@ function [ dist, xdist ] = evaldir( A, route, ix )
 % A is the bus location structure
 % route is the route definition structure
 % ix is a vector of indices into the bus location structure
-% dir is the index of the direction against which to evaluate
 %
 % Returns 3 matrices of size (length(ix),length(route.direction))
 % dist distance between readings along route
